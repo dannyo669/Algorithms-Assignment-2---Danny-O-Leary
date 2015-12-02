@@ -8,8 +8,7 @@ public class Movies {
 	private String name;
 	private String date;
 	private String imdbUrl;
-	private Categories category;
-	private ArrayList<Categories> categories;
+	private ArrayList<String> categories;
 
 	/**
 	 * Constructor for movies
@@ -18,11 +17,11 @@ public class Movies {
 	 * @param imdbUrl
 	 * @param category
 	 */
-	public Movies(String name, String date, String imdbUrl, Categories category){
+	public Movies(String name, String date, String imdbUrl, ArrayList<String> categories){
 		this.name=name;
 		this.date=date;
 		this.imdbUrl=imdbUrl;
-		this.category=category;
+		this.categories=categories;
 	}
 
 	/**
@@ -73,23 +72,16 @@ public class Movies {
 		this.imdbUrl = imdbUrl;
 	}
 
-	/**
-	 * returns the categories for the movie
-	 * @return the category
-	 */
-	public Categories getCategory() {
-		return category;
-	}
 
-	/**
-	 * sets the categories for the movie
-	 * @param category the category to set
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
 	 */
-	public void setCategory(Categories category) {
-		this.category = category;
+	@Override
+	public String toString() {
+		return "Movies name=" + name + ", date=" + date + ", imdbUrl="
+				+ imdbUrl +  ", categories="
+				+ categories + "]";
 	}
-	
-	
 	
 	
 }

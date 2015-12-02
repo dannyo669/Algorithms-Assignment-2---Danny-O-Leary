@@ -13,18 +13,17 @@ public class Recommender {
 
 	private ArrayList<Users> users;
 	private ArrayList<Movies> movies;
-	private ArrayList<Integer> categories;
-	private Categories cat;
-	String categoryNames[] = new String[19];
+	private ArrayList<String> categoryNames;
 
 	/**
 	 * Constructor 
 	 * @throws Exception
 	 */
+	
 	public Recommender() throws Exception{
 		users = new ArrayList<Users>();
 		movies = new ArrayList<Movies>();
-		categories = new ArrayList<Integer>();
+		categoryNames = new ArrayList<String>();
 		setUpArrayList();
 	}
 	public static void main(String []  args) throws Exception{
@@ -45,7 +44,7 @@ public class Recommender {
 
 	/**
 	 * Remove a user from the arraylist
-	 */
+,	 */
 	public void removeUser(int id){
 		users.remove(id);
 	}
@@ -53,9 +52,17 @@ public class Recommender {
 	/**
 	 * Allows a user to add a rating
 	 */
-	public void addRating(int id){
+	public void addRating(){
 		
 	}
+	
+	/**
+	 * Gets a movies categories
+	 */
+	public void getMovieCategory(int i){
+		
+	}
+	
 	/**
 	 * returns the current user
 	 * @param i
@@ -66,36 +73,34 @@ public class Recommender {
 
 	/**
 	 * adds a movie to an arraylist of movies
+	 * @param cat2 
 	 */
-	public void addMovie(String name, String date, String imdbUrl, Categories category){
-		movies.add(new Movies(name, date, imdbUrl, category));
+	public void addMovie(String name, String date, String imdbUrl, ArrayList<String> cat){
+		movies.add(new Movies(name, date, imdbUrl, cat));
 	}
 
 	/**
 	 * returns the movie details
 	 */
-	public Movies getMovieDetails(int i){
-		Movies movie = new Movies(movies.get(i).getName(), movies.get(i).getDate(), movies.get(i).getImdbUrl(), 
-				movies.get(i).getCategory());
-		return(movie);
+	public String getMovieDetails(int i){
+		return (movies.get(i).toString());
 	}
+
 	
 	
 	/**
-	 * return every category the movie is in
-	 * @param i
-	 * @return
+	 * check if the film has a category
+	 * @return the categories
 	 */
-	public ArrayList<String> getCategory(int i){
-		ArrayList<String> moviesCategory = new ArrayList<String>();
-		for(int a=0; a<19; a++){
-			if(cat.getTrueOrFalse(a) == true){
-				moviesCategory.add(categoryNames[a]);
-			}
+	public boolean getTrueOrFalse(int i) {
+		if(i == 1){
+			return true;
 		}
-		return moviesCategory;
+		else{
+			return false;
+		}
 	}
-
+	
 	/**
 	 * sets up an arraylist of users
 	 */
@@ -122,7 +127,7 @@ public class Recommender {
 		In inUsers3 = new In(usersFile3);
 		//each field is separated(delimited) by a '|'
 		while (!inUsers3.isEmpty()) {
-			int i=0;
+			
 			// get user and rating from data source
 			String userDetails3 = inUsers3.readLine();
 
@@ -131,26 +136,29 @@ public class Recommender {
 
 			// add user to array list
 			if (userTokens3.length == 2) {
-				this.categoryNames[i]=userTokens3[0];
+				categoryNames.add(userTokens3[0]);
 			}
-			System.out.println(categoryNames[i]);
-			i++;
 		}
 
 		File usersFile2 = new File("Data/items5.dat");
 		In inUsers2 = new In(usersFile2);
+		ArrayList<String> cat = new ArrayList<String>();
+		
 		while(!inUsers2.isEmpty()){
+			cat = new ArrayList<String>();
 			// get user and rating from data source
 			String userDetails2 = inUsers2.readLine();
-
 			//parse user details string
 			String[] userTokens2 = userDetails2.split(delims);
 			// add movie to an array list
 			if(userTokens2.length == 23){
 				for(int i=4; i<23; i++){
-					categories.add(Integer.parseInt(userTokens2[i]));
-				}
-				cat = new Categories(categories);
+					if(getTrueOrFalse(Integer.parseInt(userTokens2[i]))){
+						String str = categoryNames.get(i-4);
+						cat.add(str);
+					}
+					
+					}
 				addMovie(userTokens2[1], userTokens2[2], userTokens2[3], cat);
 			}
 		}
