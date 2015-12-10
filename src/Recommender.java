@@ -1,6 +1,10 @@
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.URL;
 import java.util.ArrayList;
-import java.util.Date;
+
 
 import edu.princeton.cs.introcs.In;
 
@@ -14,20 +18,38 @@ public class Recommender {
 	private ArrayList<Users> users;
 	private ArrayList<Movies> movies;
 	private ArrayList<String> categoryNames;
+	private Serializer serializer;
 
 	/**
 	 * Constructor 
 	 * @throws Exception
 	 */
-	
-	public Recommender() throws Exception{
+
+	public Recommender(Serializer serializer) throws Exception{
 		users = new ArrayList<Users>();
 		movies = new ArrayList<Movies>();
 		categoryNames = new ArrayList<String>();
 		setUpArrayList();
+		this.serializer=serializer;
 	}
-	public static void main(String []  args) throws Exception{
-		Recommender recommender = new Recommender();
+	
+	public static void main(String[] args){
+		
+	}
+
+	@SuppressWarnings("unchecked")
+	public void load() throws Exception
+	{
+		serializer.read();
+		users = (ArrayList<Users>) serializer.pop();
+		movies = (ArrayList<Movies>) serializer.pop();
+	}
+
+	public void store() throws Exception
+	{
+		serializer.push(users);
+		serializer.push(movies);
+		serializer.write(); 
 	}
 
 	/**
@@ -48,21 +70,34 @@ public class Recommender {
 	public void removeUser(int id){
 		users.remove(id);
 	}
-	
+
 	/**
-	 * Allows a user to add a rating
+	 * adds a rating to a specific movie
+	 * @param userId
+	 * @param movieId
+	 * @param ratings
 	 */
-	public void addRating(){
-		
+	public void addRating(int userId, int movieId, int ratings){
+		movies.get(movieId).addRating(userId, ratings);
 	}
-	
+
 	/**
-	 * Gets a movies categories
+	 * gets all the movies a user has rated
 	 */
-	public void getMovieCategory(int i){
-		
+	public void getUsersRatedMovies(int userId){
+		for(int i=0; i<movies.size(); i++){
+			if(movies.get(i).getUserRating(userId)!=0){
+			System.out.println(movies.get(i).getName() + "ratings " + movies.get(i).getUserRating(userId));
+			}
+		}
 	}
-	
+
+	/**
+	 * gets a movies average rating
+	 */
+	public double getAverageRating(int movieId){
+		return movies.get(movieId).getAverageRating();
+	}
 	/**
 	 * returns the current user
 	 * @param i
@@ -86,13 +121,11 @@ public class Recommender {
 		return (movies.get(i).toString());
 	}
 
-	
-	
 	/**
 	 * check if the film has a category
 	 * @return the categories
 	 */
-	public boolean getTrueOrFalse(int i) {
+	private boolean getTrueOrFalse(int i) {
 		if(i == 1){
 			return true;
 		}
@@ -100,12 +133,116 @@ public class Recommender {
 			return false;
 		}
 	}
+
+	/**
+	 * returns the top ten movies (highest first)
+	 */
+	public String getTopTen(){
+		Movies temp;
+		Movies current;
+		String str="";
+		for (int i=0; i<movies.size(); i++){
+			for(int j = 0; j< movies.size()-1; j++)
+			{
+				if(movies.get(j+1).getAverageRating()>movies.get(j).getAverageRating())
+				{
+					temp=movies.get(j+1);
+					current=movies.get(j);
+					movies.set(j, temp);
+					movies.set(j+1, current); 
+				}
+			}
+		}
+		for(int i=0; i<10; i++){
+			str += movies.get(i).toString() + "\n";
+		}
+		return str;
+	}
+
+	/**
+	 * returns the recommended movies for a user
+	 * 
+	 * @param userId
+	 */
+	public void getUserRecommendations(int userId){
+		int value=0;
+		int user=0;
+		ArrayList<Movies> recommendations = new ArrayList<Movies>();
+		//this gets who's recomendations are the closest
+		for(int i=1; i<users.size(); i++){
+			if(i != userId){
+				int newValue=0;
+				for(int j=0; j<movies.size()-1; j++){
+					if(movies.get(j).getUserRating(i) != 0 && movies.get(j).getUserRating(userId) != 0){ //0 means they haven't rated it
+						newValue+=movies.get(j).getUserRating(i)*movies.get(j).getUserRating(userId);
+					}
+				}
+				if(newValue>value){
+					value=newValue;
+					user = i;
+				}
+			}
+		}
+		for(int a=0; a<movies.size(); a++){
+			if(movies.get(a).getUserRating(userId) == 0 && movies.get(a).getUserRating(user) > 2){
+				if(recommendations.size()<10){
+					recommendations.add(movies.get(a)); //ensures the array is only 10 in size max
+				}
+			}
+		}
+		Movies temp;
+		Movies current;
+		for(int e=0; e<recommendations.size(); e++){
+			for(int d=0; d<recommendations.size()-1; d++){
+
+				if(recommendations.get(d+1).getAverageRating()>recommendations.get(d).getAverageRating())
+				{
+					temp=recommendations.get(d+1);
+					current=recommendations.get(d);
+					recommendations.set(d, temp);
+					recommendations.set(d+1, current); 	
+				}
+			}
+		}
+		for(int c=0; c<recommendations.size(); c++){
+			System.out.println(recommendations.get(c).toString());
+		}
+	}
 	
+	/**
+	 * Reads in the category of a movie from IMDB 
+	 * reference: http://www.omdbapi.com/
+	 * @throws IOException 
+	 */
+     public void readInMovie(String movie) throws IOException{
+    	 movie = "http://www.omdbapi.com/?t=" + movie;
+    	 String delims = "[,]";
+    	 URL url = (new URL(movie));
+    	 BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream()));
+    	 String inputLine;
+    	 String str = "";
+    	 ArrayList<String> category = new ArrayList<>();
+    	 while ((inputLine = in.readLine()) != null){
+    		 String[] userTokens = inputLine.split(delims);
+    		 for(int i=0; i<userTokens.length; i++){
+    			for (int a=0; a<categoryNames.size(); a++){
+    				if(userTokens[i].contains(categoryNames.get(a))){
+    					category.add(userTokens[i]);
+    				}
+    			}
+    			if(userTokens[i].contains("imdbID")){
+    				str = userTokens[i].substring(10, userTokens[i].length()-1);
+    			}
+    		 }
+			 addMovie(userTokens[0], userTokens[3], "http://www.imdb.com/" + str, category);
+    	 }
+     }
+     
 	/**
 	 * sets up an arraylist of users
 	 */
 	private void setUpArrayList(){
-		File usersFile = new File("Data/users5.dat");
+		File usersFile = new File("Data/users.dat");
 		In inUsers = new In(usersFile);
 		//each field is separated(delimited) by a '|'
 		String delims = "[|]";
@@ -127,7 +264,7 @@ public class Recommender {
 		In inUsers3 = new In(usersFile3);
 		//each field is separated(delimited) by a '|'
 		while (!inUsers3.isEmpty()) {
-			
+
 			// get user and rating from data source
 			String userDetails3 = inUsers3.readLine();
 
@@ -140,10 +277,10 @@ public class Recommender {
 			}
 		}
 
-		File usersFile2 = new File("Data/items5.dat");
+		File usersFile2 = new File("Data/items.dat");
 		In inUsers2 = new In(usersFile2);
 		ArrayList<String> cat = new ArrayList<String>();
-		
+
 		while(!inUsers2.isEmpty()){
 			cat = new ArrayList<String>();
 			// get user and rating from data source
@@ -157,9 +294,22 @@ public class Recommender {
 						String str = categoryNames.get(i-4);
 						cat.add(str);
 					}
-					
-					}
+				}
 				addMovie(userTokens2[1], userTokens2[2], userTokens2[3], cat);
+			}
+		}
+
+		File ratingsFile = new File("Data/ratings.dat");
+		In inRatings = new In(ratingsFile);
+
+		while(!inRatings.isEmpty()){
+			// get user and rating from data source
+			String userDetails2 = inRatings.readLine();
+			//parse user details string
+			String[] userTokens2 = userDetails2.split(delims);
+			// add movie to an array list
+			if(userTokens2.length == 4){			
+				addRating(Integer.parseInt(userTokens2[0]), Integer.parseInt(userTokens2[1])-1, Integer.parseInt(userTokens2[2]));
 			}
 		}
 	}

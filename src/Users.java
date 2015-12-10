@@ -7,12 +7,15 @@ import java.util.ArrayList;
  */
 public class Users {
 
-	private int userId;
+	
+	private static long counter =01;
+	private long userId;
 	private String firstName;
 	private String lastName;
 	private int age;
 	private String gender;
 	private String occupation;
+	
 	/**
 	 * Sets up Users
 	 * @param firstName
@@ -51,6 +54,7 @@ public class Users {
 		 else{
 			 occupation.substring(0, 19);
 		 }
+		 this.userId=counter++;
 	}
 	
 	
@@ -58,7 +62,7 @@ public class Users {
 	 * returns the users id.
 	 * @return
 	 */
-	public int getUserId() {
+	public long getUserId() {
 		return userId;
 	}
 	
